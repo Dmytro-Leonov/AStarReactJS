@@ -4,12 +4,21 @@ export default function AStar() {
   const [width, setWidth] = useState(10);
   const [height, setHeight] = useState(10);
   const [start, setStart] = useState(0);
-  const [target, settarget] = useState(width * height - 1);
-  const [func, setFunc] = useState(() => manhattanDistance);
+  const [target, setTarget] = useState(width * height - 1);
+  const [func, setFunc] = useState(() => directDistance);
+  const [path, setPath] = useState(new Set());
+  const [obstacles, setObstacles] = useState(new Set());
 
   useEffect(() => {
+    setPath(new Set());
+    aStar(func);
+  }, [obstacles, func, start, target]);
+
+  useEffect(() => {
+    setPath(new Set());
+    setObstacles(new Set());
     setStart(0);
-    settarget(width * height - 1);
+    setTarget(width * height - 1);
   }, [width, height]);
 
   function getCoords(node) {
@@ -19,7 +28,7 @@ export default function AStar() {
     return [x, y];
   }
 
-  function manhattanDistance(current, target) {
+  function manhattanDistance(current) {
     const currentCoords = getCoords(current);
     const targetCoords = getCoords(target);
     return (
@@ -28,7 +37,7 @@ export default function AStar() {
     );
   }
 
-  function shortestDistance(current, target) {
+  function directDistance(current) {
     const currentCoords = getCoords(current);
     const targetCoords = getCoords(target);
 
@@ -39,33 +48,37 @@ export default function AStar() {
   }
 
   function reconstructPath(cameFrom, current) {
-    const total_path = [current];
+    const path = [current];
 
     while (current in cameFrom) {
       current = cameFrom[current];
-      total_path.push(current);
+      path.push(current);
     }
-    return total_path;
+    setPath(new Set(path));
   }
 
   function getNeighbours(node) {
     const neighbours = [];
 
     // top neighbour
-    if (node >= width) {
+    const top = node - width;
+    if (node >= width && !obstacles.has(top)) {
       neighbours.push(node - width);
     }
     // bottom neighobur
-    if (node < width * height - 1 - width) {
-      neighbours.push(node + width);
+    const bottom = node + width;
+    if (node < width * height - width && !obstacles.has(bottom)) {
+      neighbours.push(bottom);
     }
     // left neighbour
-    if (node % width != 0) {
-      neighbours.push(node - 1);
+    const left = node - 1;
+    if (node % width != 0 && !obstacles.has(left)) {
+      neighbours.push(left);
     }
     // right neighbour
-    if (node % width != width - 1) {
-      neighbours.push(node + 1);
+    const right = node + 1;
+    if (node % width != width - 1 && !obstacles.has(right)) {
+      neighbours.push(right);
     }
 
     return neighbours;
@@ -96,7 +109,8 @@ export default function AStar() {
       openSet.delete(current);
 
       if (current === target) {
-        return reconstructPath(cameFrom, current);
+        reconstructPath(cameFrom, current);
+        return;
       }
 
       getNeighbours(current).forEach((neighbour) => {
@@ -104,7 +118,7 @@ export default function AStar() {
         if (tentativeGScore < gScore[neighbour]) {
           cameFrom[neighbour] = current;
           gScore[neighbour] = tentativeGScore;
-          fScore[neighbour] = tentativeGScore + h(neighbour, target);
+          fScore[neighbour] = tentativeGScore + h(neighbour);
 
           if (!(neighbour in openSet)) {
             openSet.add(neighbour);
@@ -112,37 +126,134 @@ export default function AStar() {
         }
       });
     }
-
-    return null;
   }
 
-  console.log(
-    [...Array(height).keys()].map((i) => {
-      return [...Array(width).keys()].map((j) => {
-        return `${i}${j}`;
-      });
-    })
-  );
+  function createObstacle(node) {
+    if (node === start || node === target) {
+      return;
+    }
+    obstacles.add(node);
+    setObstacles(new Set(obstacles));
+  }
+
+  function deleteObstacle(node) {
+    obstacles.delete(node);
+    setObstacles(new Set(obstacles));
+  }
+
+  function handleClick(e, node) {
+    if (node === start || node === target || obstacles.has(node)) {
+      return;
+    }
+
+    if (e.ctrlKey) {
+      setStart(node);
+      return;
+    }
+
+    if (e.shiftKey) {
+      setTarget(node);
+      return;
+    }
+  }
+
+  function handlePress(e, node) {
+    if (node === start || node === target) {
+      return;
+    }
+
+    if (e.buttons === 1) {
+      createObstacle(node);
+    } else if (e.buttons === 2) {
+      deleteObstacle(node);
+    }
+  }
+
   return (
     <div>
-      <button onClick={() => console.log(aStar(func))}>Process</button>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${width}, 20px)`,
-          gap: "5px",
-        }}
-      >
-        {[...Array(height).keys()].map((i) => {
-          return [...Array(width).keys()].map((j) => {
-            return (
-              <div key={`${i}${j}`}>
-                {i}
-                {j}
-              </div>
-            );
-          });
-        })}
+      <div>
+        <div className="flex gap-2 items-center">
+          <p>Width:</p>
+          <input
+            type="range"
+            min={2}
+            max={100}
+            value={width}
+            onChange={(e) => setWidth(+e.target.value)}
+          />
+          <p>{width}</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <p>Height:</p>
+          <input
+            type="range"
+            min={2}
+            max={100}
+            value={height}
+            onChange={(e) => setHeight(+e.target.value)}
+          />
+          <p>{height}</p>
+        </div>
+        <div>
+          <p>Choose heuristic function:</p>
+          <fieldset className="flex flex-col">
+            <label className="flex gap-2">
+              <input
+                type="radio"
+                name="func"
+                onChange={() => setFunc(() => directDistance)}
+                defaultChecked
+              />
+              Straight line distance
+            </label>
+            <label className="flex gap-2">
+              <input
+                type="radio"
+                name="func"
+                onChange={() => setFunc(() => manhattanDistance)}
+              />
+              Manhattan distance
+            </label>
+          </fieldset>
+          <div>
+            <p>change start: Ctrl+mouse1</p>
+            <p>change target: Shift+mouse1</p>
+            <p>add obstacles: mouse1</p>
+            <p>remove obstacles: mouse2</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center w-full justify-center">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${width}, 30px)`,
+            gridTemplateRows: `repeat(${height}, 30px)`,
+            gap: "1px",
+          }}
+          className="p-[1px] w-max bg-gray-400 select-none"
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          {[...Array(height).keys()].map((i) => {
+            return [...Array(width).keys()].map((j) => {
+              return (
+                <div
+                  key={`${i}${j}`}
+                  style={{
+                    backgroundColor: path.has(i * width + j)
+                      ? "#0075ff"
+                      : obstacles.has(i * width + j)
+                      ? "#000"
+                      : "#fff",
+                  }}
+                  className="flex items-center justify-center w-full h-full hover:bg-gray-600"
+                  onMouseDown={(e) => handleClick(e, i * width + j)}
+                  onMouseMove={(e) => handlePress(e, i * width + j)}
+                ></div>
+              );
+            });
+          })}
+        </div>
       </div>
     </div>
   );
