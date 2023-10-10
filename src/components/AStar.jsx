@@ -8,11 +8,12 @@ export default function AStar() {
   const [func, setFunc] = useState(() => directDistance);
   const [path, setPath] = useState(new Set());
   const [obstacles, setObstacles] = useState(new Set());
+  const [allowDiagonal, setAllowDiagonal] = useState(true);
 
   useEffect(() => {
     setPath(new Set());
     aStar(func);
-  }, [obstacles, func, start, target]);
+  }, [obstacles, func, start, target, allowDiagonal]);
 
   useEffect(() => {
     setPath(new Set());
@@ -47,6 +48,16 @@ export default function AStar() {
     );
   }
 
+  function distanceBetweenPoints(current, neighbour) {
+    const currentCoords = getCoords(current);
+    const neighbourCoords = getCoords(neighbour);
+
+    return Math.sqrt(
+      Math.pow(currentCoords[0] - neighbourCoords[0], 2) +
+        Math.pow(currentCoords[1] - neighbourCoords[1], 2)
+    );
+  }
+
   function reconstructPath(cameFrom, current) {
     const path = [current];
 
@@ -62,23 +73,54 @@ export default function AStar() {
 
     // top neighbour
     const top = node - width;
-    if (node >= width && !obstacles.has(top)) {
+    const topIsAvailable = node >= width;
+    if (topIsAvailable && !obstacles.has(top)) {
       neighbours.push(node - width);
     }
     // bottom neighobur
     const bottom = node + width;
-    if (node < width * height - width && !obstacles.has(bottom)) {
+    const bottomIsAvailable = node < width * height - width;
+    if (bottomIsAvailable && !obstacles.has(bottom)) {
       neighbours.push(bottom);
     }
     // left neighbour
     const left = node - 1;
-    if (node % width != 0 && !obstacles.has(left)) {
+    const leftIsAvailable = node % width != 0;
+    if (leftIsAvailable && !obstacles.has(left)) {
       neighbours.push(left);
     }
     // right neighbour
     const right = node + 1;
-    if (node % width != width - 1 && !obstacles.has(right)) {
+    const rightIsAvailable = node % width != width - 1;
+    if (rightIsAvailable && !obstacles.has(right)) {
       neighbours.push(right);
+    }
+
+    if (allowDiagonal) {
+      // top left neighbour
+      const topLeft = node - width - 1;
+      if (topIsAvailable && leftIsAvailable && !obstacles.has(topLeft)) {
+        neighbours.push(topLeft);
+      }
+      // top right neighbour
+      const topRight = node - width + 1;
+      if (topIsAvailable && rightIsAvailable && !obstacles.has(topRight)) {
+        neighbours.push(topRight);
+      }
+      // bottom left neighbour
+      const bottomLeft = node + width - 1;
+      if (bottomIsAvailable && leftIsAvailable && !obstacles.has(bottomLeft)) {
+        neighbours.push(bottomLeft);
+      }
+      // bottom right neighbour
+      const bottomRight = node + width + 1;
+      if (
+        bottomIsAvailable &&
+        rightIsAvailable &&
+        !obstacles.has(bottomRight)
+      ) {
+        neighbours.push(bottomRight);
+      }
     }
 
     return neighbours;
@@ -87,12 +129,7 @@ export default function AStar() {
   function aStar(h) {
     const openSet = new Set([start]);
     const cameFrom = {};
-    const gScore = new Proxy(
-      {},
-      {
-        get: (target, name) => (name in target ? target[name] : Infinity),
-      }
-    );
+    const gScore = {};
     gScore[start] = 0;
     const fScore = {};
     fScore[start] = h(start, target);
@@ -114,8 +151,8 @@ export default function AStar() {
       }
 
       getNeighbours(current).forEach((neighbour) => {
-        const tentativeGScore = gScore[current] + 1;
-        if (tentativeGScore < gScore[neighbour]) {
+        const tentativeGScore = gScore[current] + distanceBetweenPoints(current, neighbour);
+        if (!(neighbour in gScore) || tentativeGScore < gScore[neighbour]) {
           cameFrom[neighbour] = current;
           gScore[neighbour] = tentativeGScore;
           fScore[neighbour] = tentativeGScore + h(neighbour);
@@ -241,12 +278,27 @@ export default function AStar() {
               Manhattan distance
             </label>
           </fieldset>
-          <div>
-            <p>change start: Ctrl+mouse1</p>
-            <p>change target: Shift+mouse1</p>
-            <p>add obstacles: mouse1</p>
-            <p>remove obstacles: mouse2</p>
-          </div>
+        </div>
+        <div>
+          <label className="flex gap-2">
+            <input
+              type="checkbox"
+              name="diagonal"
+              onChange={() => setAllowDiagonal(!allowDiagonal)}
+              checked={allowDiagonal}
+              defaultChecked={allowDiagonal}
+            />
+            Allow diagonal movement
+          </label>
+        </div>
+        <div>
+          <p>change start: Ctrl+mouse1</p>
+          <p>change target: Shift+mouse1</p>
+          <p>add obstacles: mouse1</p>
+          <p>remove obstacles: mouse2</p>
+        </div>
+        <div>
+          <p>Shortest path: {path.size ? path.size  - 1 : "-"}</p>
         </div>
       </div>
       <div className="flex items-center w-full justify-center">
