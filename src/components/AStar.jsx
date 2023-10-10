@@ -142,17 +142,29 @@ export default function AStar() {
   }
 
   function handleClick(e, node) {
-    if (node === start || node === target || obstacles.has(node)) {
+    if (node === start || node === target) {
       return;
     }
 
-    if (e.ctrlKey) {
+    if (e.ctrlKey && !obstacles.has(node)) {
       setStart(node);
       return;
     }
 
-    if (e.shiftKey) {
+    if (e.shiftKey && !obstacles.has(node)) {
       setTarget(node);
+      return;
+    }
+
+    // if lmb is pressed
+    if (e.buttons === 1) {
+      createObstacle(node);
+      return;
+    }
+
+    // if rmb is pressed
+    if (e.buttons === 2) {
+      deleteObstacle(node);
       return;
     }
   }
@@ -166,6 +178,20 @@ export default function AStar() {
       createObstacle(node);
     } else if (e.buttons === 2) {
       deleteObstacle(node);
+    }
+  }
+
+  function nodeColor(node) {
+    if (node === start) {
+      return "#00ff00";
+    } else if (node === target) {
+      return "#ff0000";
+    } else if (path.has(node)) {
+      return "#0075ff";
+    } else if (obstacles.has(node)) {
+      return "#000";
+    } else {
+      return "#fff";
     }
   }
 
@@ -236,19 +262,16 @@ export default function AStar() {
         >
           {[...Array(height).keys()].map((i) => {
             return [...Array(width).keys()].map((j) => {
+              const node = i * width + j;
               return (
                 <div
                   key={`${i}${j}`}
                   style={{
-                    backgroundColor: path.has(i * width + j)
-                      ? "#0075ff"
-                      : obstacles.has(i * width + j)
-                      ? "#000"
-                      : "#fff",
+                    backgroundColor: nodeColor(node),
                   }}
                   className="flex items-center justify-center w-full h-full hover:bg-gray-600"
-                  onMouseDown={(e) => handleClick(e, i * width + j)}
-                  onMouseMove={(e) => handlePress(e, i * width + j)}
+                  onMouseDown={(e) => handleClick(e, node)}
+                  onMouseMove={(e) => handlePress(e, node)}
                 ></div>
               );
             });
