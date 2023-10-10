@@ -39,13 +39,7 @@ export default function AStar() {
   }
 
   function directDistance(current) {
-    const currentCoords = getCoords(current);
-    const targetCoords = getCoords(target);
-
-    return Math.sqrt(
-      Math.pow(currentCoords[0] - targetCoords[0], 2) +
-        Math.pow(currentCoords[1] - targetCoords[1], 2)
-    );
+    return distanceBetweenPoints(current, target);
   }
 
   function distanceBetweenPoints(current, neighbour) {
