@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
 export default function AStar() {
-  const [width, setWidth] = useState(10);
-  const [height, setHeight] = useState(10);
+  const [width, setWidth] = useState(25);
+  const [height, setHeight] = useState(25);
   const [start, setStart] = useState(0);
   const [target, setTarget] = useState(width * height - 1);
   const [func, setFunc] = useState(() => euclideanDistance);
@@ -322,118 +322,140 @@ export default function AStar() {
   }
 
   return (
-    <div className="flex gap-5">
-      <div>
-        <div className="flex gap-2 items-center">
-          <p>Width:</p>
-          <input
-            type="range"
-            min={2}
-            max={30}
-            value={width}
-            onChange={(e) => setWidth(+e.target.value)}
-          />
-          <p>{width}</p>
-        </div>
-        <div className="flex gap-2 items-center">
-          <p>Height:</p>
-          <input
-            type="range"
-            min={2}
-            max={30}
-            value={height}
-            onChange={(e) => setHeight(+e.target.value)}
-          />
-          <p>{height}</p>
-        </div>
-        <div>
-          <p>Choose heuristic function:</p>
-          <fieldset className="flex flex-col">
+    <div className="p-2">
+      <h1 className="text-3xl text-center font-bold mb-2">
+        A* pathfinding algorithm
+      </h1>
+      <div className="flex flex-col gap-5 p-2 lg:flex-row">
+        <div className="flex flex-row flex-wrap gap-5 lg:gap-2 lg:flex-col lg:flex-nowrap">
+          <div>
+            <h3 className="text-lg font-semibold">Choose grid size:</h3>
+            <div className="flex gap-2 items-center">
+              <p>Width:</p>
+              <input
+                type="range"
+                min={2}
+                max={50}
+                value={width}
+                onChange={(e) => setWidth(+e.target.value)}
+              />
+              <p>{width}</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <p>Height:</p>
+              <input
+                type="range"
+                min={2}
+                max={50}
+                value={height}
+                onChange={(e) => setHeight(+e.target.value)}
+              />
+              <p>{height}</p>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">
+              Choose heuristic function:
+            </h3>
+            <fieldset className="flex flex-col">
+              <label className="flex gap-2">
+                <input
+                  type="radio"
+                  name="func"
+                  onChange={() => setFunc(() => euclideanDistance)}
+                  defaultChecked
+                />
+                Euclidean distance
+              </label>
+              <label className="flex gap-2">
+                <input
+                  type="radio"
+                  name="func"
+                  onChange={() => setFunc(() => manhattanDistance)}
+                />
+                Manhattan distance
+              </label>
+            </fieldset>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Diagonal movement:</h3>
             <label className="flex gap-2">
               <input
-                type="radio"
-                name="func"
-                onChange={() => setFunc(() => euclideanDistance)}
-                defaultChecked
+                type="checkbox"
+                name="diagonal"
+                onChange={() => setAllowDiagonal(!allowDiagonal)}
+                checked={allowDiagonal}
               />
-              Euclidean distance
+              Allow diagonal movement
             </label>
             <label className="flex gap-2">
               <input
-                type="radio"
-                name="func"
-                onChange={() => setFunc(() => manhattanDistance)}
+                type="checkbox"
+                name="corners"
+                onChange={() =>
+                  setAllowGoingBetweenCorners(!allowGoingBetweenCorners)
+                }
+                checked={allowGoingBetweenCorners}
+                disabled={!allowDiagonal}
               />
-              Manhattan distance
+              Allow going between corners
             </label>
-          </fieldset>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Controls:</h3>
+            <p>
+              Change start: <kbd className="bg-gray-900 rounded px-2">Ctrl+LMB</kbd>
+            </p>
+            <p>
+              Change target: <kbd className="bg-gray-900 rounded px-2">Shift+RMB</kbd>
+            </p>
+            <p>
+              Create obstacle: <kbd className="bg-gray-900 rounded px-2">LMB</kbd>
+            </p>
+            <p>
+              Remove obstacle: <kbd className="bg-gray-900 rounded px-2">RMB</kbd>
+            </p>
+            <p>
+              Remove all obstacles: <kbd className="bg-gray-900 rounded px-2">C</kbd>
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">
+              Shortest path: {path.size ? path.size - 1 : "-"}
+            </h3>
+            <p></p>
+          </div>
         </div>
         <div>
-          <label className="flex gap-2">
-            <input
-              type="checkbox"
-              name="diagonal"
-              onChange={() => setAllowDiagonal(!allowDiagonal)}
-              checked={allowDiagonal}
-            />
-            Allow diagonal movement
-          </label>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${width}, 30px)`,
+              gridTemplateRows: `repeat(${height}, 30px)`,
+              gap: "1px",
+            }}
+            className="w-max bg-gray-400 select-none"
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {[...Array(height).keys()].map((i) => {
+              return [...Array(width).keys()].map((j) => {
+                const node = i * width + j;
+                return (
+                  <div
+                    key={`${i}${j}`}
+                    style={{
+                      backgroundColor: nodeColor(node),
+                    }}
+                    className="flex items-center justify-center w-full h-full hover:bg-gray-600"
+                    onMouseDown={(e) => handleClick(e, node)}
+                    onMouseMove={(e) => handlePress(e, node)}
+                  ></div>
+                );
+              });
+            })}
+          </div>
         </div>
-        <div>
-          <label className="flex gap-2">
-            <input
-              type="checkbox"
-              name="corners"
-              onChange={() =>
-                setAllowGoingBetweenCorners(!allowGoingBetweenCorners)
-              }
-              checked={allowGoingBetweenCorners}
-            />
-            Allow going between corners (when &quot;Allow diagonal
-            movement&quot; is enabled)
-          </label>
-        </div>
-        <div>
-          <p>change start: Ctrl+mouse1</p>
-          <p>change target: Shift+mouse1</p>
-          <p>add obstacles: mouse1</p>
-          <p>remove obstacles: mouse2</p>
-        </div>
-        <div>
-          <button onClick={clearObstacles}>Clear obstacles (C)</button>
-        </div>
-        <div>
-          <p>Shortest path: {path.size ? path.size - 1 : "-"}</p>
-        </div>
-      </div>
-      <div className="">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${width}, 30px)`,
-            gridTemplateRows: `repeat(${height}, 30px)`,
-            gap: "1px",
-          }}
-          className="w-max bg-gray-400 select-none"
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          {[...Array(height).keys()].map((i) => {
-            return [...Array(width).keys()].map((j) => {
-              const node = i * width + j;
-              return (
-                <div
-                  key={`${i}${j}`}
-                  style={{
-                    backgroundColor: nodeColor(node),
-                  }}
-                  className="flex items-center justify-center w-full h-full hover:bg-gray-600"
-                  onMouseDown={(e) => handleClick(e, node)}
-                  onMouseMove={(e) => handlePress(e, node)}
-                ></div>
-              );
-            });
-          })}
-        </div>
+        <div></div>
       </div>
     </div>
   );
