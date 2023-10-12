@@ -5,7 +5,7 @@ export default function AStar() {
   const [height, setHeight] = useState(10);
   const [start, setStart] = useState(0);
   const [target, setTarget] = useState(width * height - 1);
-  const [func, setFunc] = useState(() => directDistance);
+  const [func, setFunc] = useState(() => euclideanDistance);
   const [path, setPath] = useState(new Set());
   const [obstacles, setObstacles] = useState(new Set());
   const [allowDiagonal, setAllowDiagonal] = useState(true);
@@ -38,7 +38,7 @@ export default function AStar() {
     );
   }
 
-  function directDistance(current) {
+  function euclideanDistance(current) {
     return distanceBetweenPoints(current, target);
   }
 
@@ -258,10 +258,10 @@ export default function AStar() {
               <input
                 type="radio"
                 name="func"
-                onChange={() => setFunc(() => directDistance)}
+                onChange={() => setFunc(() => euclideanDistance)}
                 defaultChecked
               />
-              Straight line distance
+              Euclidean distance
             </label>
             <label className="flex gap-2">
               <input
@@ -303,7 +303,7 @@ export default function AStar() {
             gridTemplateRows: `repeat(${height}, 30px)`,
             gap: "1px",
           }}
-          className="p-[1px] w-max bg-gray-400 select-none"
+          className="w-max bg-gray-400 select-none"
           onContextMenu={(e) => e.preventDefault()}
         >
           {[...Array(height).keys()].map((i) => {
