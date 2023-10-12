@@ -1,0 +1,21 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background -->
+  <rect x="0" y="0" width="100" height="100" fill="white" />
+
+  <!-- Start -->
+  <rect x="0" y="0" width="20" height="20" fill="#00ff00" />
+
+  <!-- Path -->
+  <rect x="0" y="20" width="20" height="20" fill="#0075ff" />
+  <rect x="20" y="20" width="20" height="20" fill="#0075ff" />
+  <rect x="20" y="40" width="20" height="20" fill="#0075ff" />
+  <rect x="40" y="40" width="20" height="20" fill="#0075ff" />
+  <rect x="40" y="60" width="20" height="20" fill="#0075ff" />
+  <rect x="60" y="60" width="20" height="20" fill="#0075ff" />
+  <rect x="60" y="80" width="20" height="20" fill="#0075ff" />
+
+  <!-- End -->
+  <rect x="80" y="80" width="20" height="20" fill="#ff0000" />
+
+</svg>
