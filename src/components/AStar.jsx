@@ -24,6 +24,16 @@ export default function AStar() {
     setTarget(width * height - 1);
   }, [width, height]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === "KeyC") {
+        clearObstacles();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
   /**
    * @param {number} node - Node
    * @returns {number[]} - Coordinates of the node
@@ -289,6 +299,10 @@ export default function AStar() {
     }
   }
 
+  function clearObstacles() {
+    setObstacles(new Set());
+  }
+
   /**
    * @param {number} node - Node
    * @returns {string} - Color of the node
@@ -308,14 +322,14 @@ export default function AStar() {
   }
 
   return (
-    <div>
+    <div className="flex gap-5">
       <div>
         <div className="flex gap-2 items-center">
           <p>Width:</p>
           <input
             type="range"
             min={2}
-            max={100}
+            max={30}
             value={width}
             onChange={(e) => setWidth(+e.target.value)}
           />
@@ -326,7 +340,7 @@ export default function AStar() {
           <input
             type="range"
             min={2}
-            max={100}
+            max={30}
             value={height}
             onChange={(e) => setHeight(+e.target.value)}
           />
@@ -386,10 +400,13 @@ export default function AStar() {
           <p>remove obstacles: mouse2</p>
         </div>
         <div>
+          <button onClick={clearObstacles}>Clear obstacles (C)</button>
+        </div>
+        <div>
           <p>Shortest path: {path.size ? path.size - 1 : "-"}</p>
         </div>
       </div>
-      <div className="flex items-center w-full justify-center">
+      <div className="">
         <div
           style={{
             display: "grid",
